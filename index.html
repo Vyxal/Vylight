@@ -11,9 +11,11 @@
         }
     </style>
 </head>
-<body>
-    <textarea id='textarea' oninput='vylight()'></textarea>
-    <pre id='demo'>1 2 3</pre>
+<body onload='vylight()'>
+    <textarea id='textarea' oninput='vylight()'>1 2 3 `hello, world! ` \a ‛oo øf «123« kH »ergi» vp # This is a comment
+⟨`list item 1`| 2 | 3⟩ @adefinedfunction:3|`hello`; [ (a| ←a 5 + ,) ]
+λ1|code; ₌mp </textarea>
+    <pre id='demo'></pre>
     <script src='./parse.js'></script>
     <script>
         var var_color = 'lightblue',
@@ -104,6 +106,10 @@
                         break;
                     case 'LAMBDA': case 'TWO_BYTE_LAMBDA': case 'THREE_BYTE_LAMBDA': case 'FILTER': case 'MAP': case 'SORT_MAP':
                         so_far += `<span style="color:${func_color}">${func_stuff[token.NAME]}</span>`;
+                        if(token.NAME == 'LAMBDA' && token.SOURCE){
+                            so_far += `<span style="color:${num_color}">${token.SOURCE}</span>`;
+                            so_far += `<span style="color:${func_color}">|</span>`;
+                        }
                         break;
                     case 'LIST': case 'CLOSE_LIST': 
                         so_far += `<span style="color:${list_color}">${`⟨⟩`[token.NAME == 'LIST'?0:1]}</span>`;

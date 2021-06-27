@@ -182,16 +182,19 @@ function parse(code){
             struct_nest.push(OPENING[char])
             tokens.push(new TOKEN(OPENING[char],''))
             structure = 'NONE'
+            if(char == 'λ' || char == '(') active_code = '';
         } else if(char in CLOSING){
             tokens.push(new TOKEN(CLOSING[char], struct_nest.pop()));
         } else if(char == '|'){
             if(struct_nest[struct_nest.length-1] == 'FOR'){
                 while(tokens.pop().NAME !== 'FOR');
                 tokens.push(new TOKEN('FOR',active_code.replace(/\s/g,'')))
+                continue;
             }
             if(struct_nest[struct_nest.length-1] == 'LAMBDA'){
-                tokens.pop()
+                while(tokens.pop().NAME !== 'LAMBDA');
                 tokens.push(new TOKEN('LAMBDA',active_code.replace(/\s/g,'')))
+                continue;
             }
             tokens.push(new TOKEN('BRANCH',struct_nest[struct_nest.length-1]))
             structure = 'NONE'
@@ -231,7 +234,7 @@ function parse(code){
         if(struct_nest[struct_nest.length-1] == 'FOR' && VAR_CHARS.includes(char) && !string_so_far){
             active_code += char;
         } 
-        if(struct_nest[struct_nest.length-1] == 'LAMBDA' && char != '|' && !string_so_far){
+        if(struct_nest[struct_nest.length-1] == 'LAMBDA' && char != '|' && char !== 'λ' && (!string_so_far || structure == 'NUMBER')){
             active_code += char;
         }
     }
