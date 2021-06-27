@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vylight demo</title>
+    <style>
+        *{
+            color:white;background-color:#333
+        }
+    </style>
+</head>
+<body>
+    <textarea id='textarea' oninput='vylight()'></textarea>
+    <pre id='demo'>1 2 3</pre>
+    <script src='./parse.js'></script>
+    <script>
+        var var_color = 'lightblue',
+        num_color = 'orange',
+        string_color = 'brown',
+        func_color = 'rgb(255, 248, 148)',
+        comp_color = 'rgb(48, 112, 39)',
+        cf_color = 'rgb(11, 115, 212)',
+        comment_color = 'green',
+        mod_color = 'pink',
+        list_color = 'rgb(136, 75, 160)',
+        pre = document.getElementById('demo'),
+        textarea = document.getElementById('textarea');
+        var cf_stuff = {
+            'IF': '[',
+            'WHILE': '{',
+            'CLOSE_IF': ']',
+            'BRANCH': '|',
+            'CLOSE_WHILE': '}',
+            'CLOSE_FOR': ')'
+        }
+        var func_stuff = {
+            'LAMBDA': 'λ',
+            'FILTER': '\'',
+            'SORT_MAP': 'µ',
+            'MAP': 'ƛ',
+            'TWO_BYTE_LAMBDA': '‡',
+            'THREE_BYTE_LAMBDA': '≬'
+        }
+        function vylight(){
+            var tokens = parse(textarea.value);
+            var so_far = '';
+            console.log(tokens)
+            for(token of tokens){
+                switch(token.NAME){
+                    case 'NUMBER':
+                        so_far += `<span style="color:${num_color}">${token.SOURCE}</span>`; 
+                        break;
+                    case 'IF': case 'WHILE': case 'CLOSE_IF': case 'CLOSE_FOR': case 'CLOSE_WHILE': 
+                        so_far += `<span style="color:${cf_color}">${cf_stuff[token.NAME]}</span>`; 
+                        break;
+                    case 'FOR':
+                        so_far += `<span style="color:${cf_color}">(</span>`
+                        if(token.SOURCE) so_far += `<span style="color:${var_color}">${token.SOURCE}</span>`; 
+                        break;
+                    case 'STRING': case 'SCC':
+                        so_far += `<span style="color:${string_color}">${token.SOURCE}</span>`; 
+                        break;
+                    case 'COMP_STRING': case 'COMP_INT': 
+                        so_far += `<span style="color:${comp_color}">${token.SOURCE}</span>`; 
+                        break;
+                    case 'VAR_GET': case 'VAR_SET': 
+                       so_far += `<span style="color:${var_color}">${token.SOURCE}</span>`; 
+                        break;
+                    case 'ELEMENT': 
+                        so_far += token.SOURCE;
+                        break;
+                    case 'CHAR':
+                        var mod_string = '',i=0;
+                        for(char of token.SOURCE){
+                            if(!'vß⁽¨ø∆kÞ⁺'.includes(char)){
+                                break;
+                            } else {
+                                mod_string += char;
+                            }
+                            i++;
+                        }
+                        so_far += `<span style="color:${mod_color}">${mod_string}</span>`;
+                        if(token.SOURCE[i]){
+                            if(token.SOURCE[i] == '\\'){
+                                so_far += `<span style="color:${string_color}">${token.SOURCE.slice(i)}</span>`;
+                            } else {
+                                so_far += token.SOURCE[i]
+                            }
+                        }
+                        break;
+                    case 'FUNC_DEF':
+                        so_far += `<span style="color:${func_color}">@${token.SOURCE}|</span>`;
+                        break;
+                    case 'FUNC_REF':
+                        so_far += `<span style="color:${func_color}">°${token.SOURCE};</span>`;
+                        break;
+                    case 'FUNC_CALL':
+                        so_far += `<span style="color:${func_color}">@${token.SOURCE};</span>`;
+                        break;
+                    case 'CLOSE_FUNC': case 'CLOSE_MAP': 
+                        so_far += `<span style="color:${func_color}">;</span>`;
+                        break;
+                    case 'LAMBDA': case 'TWO_BYTE_LAMBDA': case 'THREE_BYTE_LAMBDA': case 'FILTER': case 'MAP': case 'SORT_MAP':
+                        so_far += `<span style="color:${func_color}">${func_stuff[token.NAME]}</span>`;
+                        break;
+                    case 'LIST': case 'CLOSE_LIST': 
+                        so_far += `<span style="color:${list_color}">${`⟨⟩`[token.NAME == 'LIST'?0:1]}</span>`;
+                        break;
+                    case 'BRANCH':
+                        if(token.SOURCE == 'LIST'){
+                            so_far += `<span style="color:${list_color}">|</span>`;
+                        } else {
+                            so_far += `<span style="color:${cf_color}">|</span>`;
+                        }
+                        break;
+                    case 'COMMENT':
+                        so_far += `<span style="color:${comment_color}">#${token.SOURCE}</span>`;
+                        break;
+                    case 'NOP':
+                        so_far += token.SOURCE;
+                        break;
+                    case 'PARALLEL_APPLY':
+                        so_far +=  `<span style="color:${mod_color}">₌</span>`;
+                        break;
+                    case 'LIST_PARALLEL_APPLY':
+                        so_far +=  `<span style="color:${mod_color}">₍</span>`;
+
+                }
+            }
+            pre.innerHTML = so_far.replace(/\n/g,'<br>');
+        }
+    </script>
+</body>
+</html>
