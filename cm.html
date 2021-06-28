@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeMirror version demo</title>
+    <style>
+        .cm-mod{
+            color: #569cd6;
+        }
+        .cm-comp{
+            color: #4ec9b0;
+        }
+        .cm-function{
+            color: #dcdcad;
+        }
+        .cm-list{
+            color: rgb(136, 75, 160);
+        }
+        .cm-string{
+            color: #ce9178 !important;
+        }
+        .cm-comment{
+            color:#6a9955 !important;
+        }
+        .cm-keyword{
+            color: #c586c0 !important;
+        }
+        .cm-var{
+            color: #9cdcfe
+        }
+        .cm-number{
+            color: #b5cea8 !important;
+        }
+        .CodeMirror-cursor{
+            border-color: #d4d4d4 !important;
+        }
+        .CodeMirror{
+            color: #d4d4d4 !important;
+            background-color: #1e1e1e !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Create a simple CodeMirror instance -->
+    <link rel="stylesheet" href="codemirror.css">
+    <script src="codemirror.js"></script>
+    <script src="mode-vyxal.js"></script>
+    <textarea id='myTextarea'></textarea>
+    <textarea id=dummy style="visibility: hidden;position:absolute; height: 0px"></textarea>
+    <script>
+        var myTextarea =  document.getElementById('myTextarea')
+        var editor = CodeMirror.fromTextArea(myTextarea, {
+            mode: 'vyxal'
+        });
+        const $ = x => document.querySelector(x);
+        function resize() {
+	        var dummy = $("#dummy");
+	        dummy.style.fontFamily = getComputedStyle($('.CodeMirror.cm-s-default')).fontFamily;
+            dummy.style.fontSize = getComputedStyle($('.CodeMirror.cm-s-default')).fontSize;
+	        dummy.style.width = getComputedStyle($('.CodeMirror.cm-s-default')).width;
+	        dummy.value = editor.doc.getValue();
+	        editor.setSize(null,Math.max(dummy.scrollHeight + 5, editor.getTextArea().dataset.baseHeight || 27));
+	        dummy.value = "";
+        }
+        editor.on('change',resize)
+    </script>
+</body>
+</html>

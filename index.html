@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vylight demo</title>
     <style>
-        *{
-            color:white;background-color:#333
+        * {
+            color:#d4d4d4;background-color:#1e1e1e;
         }
     </style>
 </head>
@@ -18,18 +18,18 @@
     <pre id='demo'></pre>
     <script src='./parse.js'></script>
     <script>
-        var var_color = 'lightblue',
-        num_color = 'orange',
-        string_color = 'brown',
-        func_color = 'rgb(255, 248, 148)',
-        comp_color = 'rgb(48, 112, 39)',
-        cf_color = 'rgb(11, 115, 212)',
-        comment_color = 'green',
-        mod_color = 'pink',
+        var var_color = '#9cdcfe',
+        num_color = '#b5cea8',
+        string_color = '#ce9178',
+        func_color = '#dcdcaa', 
+        comp_color = '#4ec9b0',
+        cf_color = '#c586c0',
+        comment_color = '#6a9955',
+        mod_color = '#569cd6',
         list_color = 'rgb(136, 75, 160)',
         pre = document.getElementById('demo'),
         textarea = document.getElementById('textarea');
-        var cf_stuff = {
+        var cf_stuff = {  
             'IF': '[',
             'WHILE': '{',
             'CLOSE_IF': ']',

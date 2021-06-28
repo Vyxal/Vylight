@@ -24,6 +24,7 @@ const OPENING = {
     '⟨': 'LIST',
     'µ': 'SORT_MAP'
 }
+
 const CLOSING = {
     '}': 'CLOSE_WHILE',
     ']': 'CLOSE_IF',
