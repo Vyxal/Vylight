@@ -33,12 +33,21 @@
         .cm-number{
             color: #b5cea8 !important;
         }
+        .cm-constant{
+            color: #4fc1ff;
+        }
         .CodeMirror-cursor{
             border-color: #d4d4d4 !important;
         }
         .CodeMirror{
             color: #d4d4d4 !important;
             background-color: #1e1e1e !important;
+        }
+        .cm-digraph{
+            color: #d7ba7d;
+        }
+        .CodeMirror-selected{
+            background-color: #555 !important;
         }
     </style>
 </head>
@@ -52,7 +61,8 @@
     <script>
         var myTextarea =  document.getElementById('myTextarea')
         var editor = CodeMirror.fromTextArea(myTextarea, {
-            mode: 'vyxal'
+            mode: 'vyxal',
+            lineWrap:  true
         });
         const $ = x => document.querySelector(x);
         function resize() {

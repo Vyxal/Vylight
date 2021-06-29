@@ -11,7 +11,9 @@
 })(function(CodeMirror) {
     "use strict"
     const NUMBER_CHARS = '0123456789.';
-    const MOD_CHARS = 'vß¨ø∆kÞ⁺₌₍';
+    const MOD_CHARS = 'vß⁺₌₍';
+    const DIGRAPHS = '¨ø∆Þ';
+    const CONSTANTS  = '₁₄₆₇₈¶∞¤ð×';``
     const FUNC_CHARS = 'ƛ\'λµ⁽‡≬;'
     const OPENING = '{[(⟨';
     const CLOSING = '}])⟩';
@@ -36,9 +38,17 @@
                     state.structure = 'COMMENT';
                     return 'comment'
                 } 
+                if(state.structure == 'LAMBDA_ARITY'){
+                    if(char == '|') state.structure = 'NONE';
+                    return 'function'
+                }
                 if(state.structure == 'FUNC_DEF'){
                     if(char == '|') state.structure = 'NONE';
                     return 'function';
+                }
+                if(state.structure == 'FUNC_REF'){
+                    if(char == ';') state.structure = 'NONE';
+                    return  'function';
                 }
                 if(state.structure == 'FUNC_CALL'){
                     if(char == ';') structure = 'NONE'
@@ -90,7 +100,10 @@
                 }
                 if(NUMBER_CHARS.includes(char) && state.structure == 'NONE') return 'number'
                 if(MOD_CHARS.includes(char) && state.structure == 'NONE') return 'mod'
-                if(FUNC_CHARS.includes(char) && state.structure == 'NONE') return 'function'
+                if(FUNC_CHARS.includes(char) && state.structure == 'NONE'){
+                    if(char == 'λ' && stream.match(/^\d+\|/,false)) state.structure = 'LAMBDA_ARITY'
+                    return 'function'
+                } 
                 if(OPENING.includes(char)){
                     state.struct_nest.push(char)
                     if(char == '('){
@@ -111,15 +124,36 @@
                     }
                     return 'function';
                 }
-                if(char == '|' && state.structure == 'NONE'){
+                if(char == '|' && (state.structure == 'NONE' || state.structure == 'VAR')){
                     if([...state.struct_nest].pop() == '⟨') return 'list'
+                    state.structure = 'NONE'
                     return 'keyword'
+                }
+                if(char == '°' && state.structure == 'NONE'){
+                    state.structure = 'FUNC_REF';
+                    return 'function'
                 }
                 if(state.structure == 'VAR' && VAR_CHARS.includes(char)) return 'var';
                 if(CLOSING.includes(char)){
                     state.struct_nest.pop()
                     if(char == '⟩') return 'list'
                     return 'keyword';
+                }
+                if(CONSTANTS.includes(char) || state.structure == 'CONSTANT'){
+                    if(state.structure == 'CONSTANT') state.structure = 'NONE'
+                    return 'constant'
+                } 
+                if(DIGRAPHS.includes(char)){
+                    state.structure = 'DIGRAPH'
+                    return 'digraph'
+                }   
+                if(state.structure == 'DIGRAPH'){
+                    state.structure = 'NONE'
+                    return 'digraph'
+                }
+                if(char ==  'k'){
+                    state.structure = 'CONSTANT'
+                    return 'constant'
                 }
                 return 'none'
             }
