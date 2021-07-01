@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Permissions-Policy" content="interest-cohort=()"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <title>Vyxal Interpreter</title>
+
+    <style>
+        .right {
+    float: right;
+    display: flex;
+}
+
+.left {
+    float: right;
+    display: flex;
+}
+
+button {
+    border: none !important;
+    color: white
+
+}
+body {
+    background-color: #353535;
+    color: #C0C0C0;
+}
+
+pre {
+    overflow-x: auto;
+    white-space: pre-wrap;
+    white-space: -moz-pre-wrap;
+    white-space: -pre-wrap;
+    white-space: -o-pre-wrap;
+    word-wrap: break-word;
+
+}
+
+input, textarea {
+    color: white;
+    background-color: #1e1e1e !important;
+    font-family: 'DejaVu Sans Mono', monospace;
+    min-height: 1em !important;
+    height: 1em;
+    border: none !important;
+    border-radius: 0px !important;
+}
+input:focus,textarea:focus{
+    border: none;
+}
+textarea {
+    width: 100%;
+}
+
+details {
+    color: white;
+    font-size: large;
+    font-family: 'Montserrat', sans-serif;
+
+}
+
+summary {
+    padding-bottom: 10px;
+}
+
+#keyboard {
+    border: 1px solid #eee;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.key {
+    padding:2px;
+    cursor:crosshair;
+    font-family: 'DejaVu Sans Mono', monospace;
+    color: white;
+    width: 1em;
+
+}
+.key:hover {
+    background-color: rgba(255, 255, 255, 0.596);
+    color: #000;
+}
+
+h2 {
+    font-family: 'Montserrat', sans-serif;
+}
+
+a {
+    text-decoration: none !important;
+    color: white !important;
+}
+
+session-code {
+    display: none;
+}
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css" integrity="sha512-EZLkOqwILORob+p0BXZc+Vm3RgJBOe1Iq/0fiI7r/wJgzOFZMlsqTa29UEl6v6U6gsV4uIpsNZoV32YZqrCRCQ==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="shortcut icon" type="image/jpg" href="https://raw.githubusercontent.com/Lyxal/Vyxal/master/templates/favicon.ico">
+    
+    <!--Codemirror stuff-->
+    <script src='https://cdn.jsdelivr.net/npm/codemirror@5.62.0/lib/codemirror.js'></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.62.0/lib/codemirror.css">
+    <style>
+        .cm-mod{color:#569cd6}.cm-comp{color:#4ec9b0}.cm-function{color:#dbdb78}.cm-list{color:rgb(136, 75, 160)}.cm-string{color:#ce9178 !important}.cm-comment{color:#6a9955 !important}.cm-keyword{color:#c586c0 !important}.cm-var{color:#9cdcfe}.cm-number{color:#b5cea8 !important}.cm-constant{color:#4fc1ff}.CodeMirror-cursor{border-color:#d4d4d4 !important}.CodeMirror{color:#d4d4d4 !important;background-color:#1e1e1e !important}.cm-digraph{color:#d7ba7d}.CodeMirror-selected{background-color:#555 !important}
+    </style>
+    <!-- Parser -->
+    <script>
+        (function(mod){if(typeof exports=="object"&&typeof module=="object"){mod(require("../../lib/codemirror"))}else if(typeof define=="function"&&define.amd){define(["../../lib/codemirror"],mod)}else{mod(CodeMirror)}})(function(CodeMirror){"use strict";const NUMBER_CHARS='0123456789.';const MOD_CHARS='vß⁺₌₍';const DIGRAPHS='¨ø∆Þ';const CONSTANTS='₀₁₄₆₇₈¶∞¤ð×';``;const FUNC_CHARS='ƛ\'λµ⁽‡≬;';const OPENING='{[(⟨';const CLOSING='}])⟩';const VAR_CHARS='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_';CodeMirror.defineMode("vyxal",function(){return{startState:function(){return{structure:'NONE',scc:0,struct_nest:[]}},token:function(stream,state){if(stream.sol()&&state.structure=='COMMENT'){state.structure='NONE'}var char=stream.next().toString();if(state.structure=='VAR'&&!VAR_CHARS.includes(char)){state.structure='NONE'}if(state.structure=='VAR'&&VAR_CHARS.includes(char)){return 'var'}if(state.structure=='COMMENT'){return 'comment'}if(char=='#'&&state.structure=='NONE'){state.structure='COMMENT';return 'comment'}if(state.structure=='LAMBDA_ARITY'){if(char=='|'){state.structure='NONE'}return 'function'}if(state.structure=='FUNC_DEF'){if(char=='|'){state.structure='NONE'}return 'function'}if(state.structure=='FUNC_REF'){if(char==';'){state.structure='NONE'}return 'function'}if(state.structure=='FUNC_CALL'){if(char==';'){structure='NONE'}return 'function'}if(char=='`'){if(state.structure=='STRING'){state.structure='NONE'}else{state.structure='STRING'}return 'string'}if(state.structure=='STRING'){return 'string'}if(state.structure=='CHAR'){state.structure='NONE';return 'string'}if(char=='\\'&&state.structure=='NONE'){state.structure='CHAR';return 'string'}if(char=='‛'&&state.structure=='NONE'){state.structure='SCC';state.scc=2;return 'string'}if(state.structure=='SCC'){state.scc-=1;if(state.scc==0){state.structure='NONE'}return 'string'}if((state.structure=='COMP_STRING'&&char!=='«')||(state.structure=='COMP_INT'&&char!=='»')){return 'comp'}if(char=='«'){if(state.structure=='COMP_STRING'){state.structure='NONE'}else{state.structure='COMP_STRING'}return 'comp'}if(char=='»'){if(state.structure=='COMP_INT'){state.structure='NONE'}else{state.structure='COMP_INT'}return 'comp'}if(NUMBER_CHARS.includes(char)&&state.structure=='NONE'){return 'number'}if(MOD_CHARS.includes(char)&&state.structure=='NONE'){return 'mod'}if(FUNC_CHARS.includes(char)&&state.structure=='NONE'){if(char=='λ'&&stream.match(/^\d+\|/,false)){state.structure='LAMBDA_ARITY'}return 'function'}if(OPENING.includes(char)){state.struct_nest.push(char);if(char=='('){if(stream.match(/^[a-zA-Z_]+\|/,false)){state.structure='VAR'}}if(char=='⟨'){return 'list'}return 'keyword'}if('←→'.includes(char)&&state.structure=='NONE'){state.structure='VAR';return 'var'}if(char=='@'&&state.structure=='NONE'){if(stream.match(/^[a-zA-Z_]+(\:([a-zA-Z_]|\d)+)*|/)){state.structure='FUNC_DEF'}else{state.structure='FUNC_CALL'}return 'function'}if(char=='|'&&(state.structure=='NONE'||state.structure=='VAR')){if([...state.struct_nest].pop()=='⟨'){return 'list'}state.structure='NONE';return 'keyword'}if(char=='°'&&state.structure=='NONE'){state.structure='FUNC_REF';return 'function'}if(CLOSING.includes(char)){state.struct_nest.pop();if(char=='⟩'){return 'list'}return 'keyword'}if(CONSTANTS.includes(char)||state.structure=='CONSTANT'){if(state.structure=='CONSTANT'){state.structure='NONE'}return 'constant'}if(DIGRAPHS.includes(char)){state.structure='DIGRAPH';return 'digraph'}if(state.structure=='DIGRAPH'){state.structure='NONE';return 'digraph'}if(char=='k'){state.structure='CONSTANT';return 'constant'}return 'none'}}})});
+    </script>
+    <script>
+	    search = window
+        glyphQuery = String.fromCharCode(0162,105,0143,107)
+        this.prevQuery = "";
+        var codepage = "λƛ¬∧⟑∨⟇÷×«␤»°•ß†€"
+        codepage += "½∆ø↔¢⌐æʀʁɾɽÞƈ∞¨␠"
+        codepage += "!\"#$%&'()*+,-./01"
+        codepage += "23456789:;<=>?@A"
+        codepage += "BCDEFGHIJKLMNOPQ"
+        codepage += "RSTUVWXYZ[\\]`^_abc"
+        codepage += "defghijklmnopqrs"
+        codepage += "tuvwxyz{|}~↑↓∴∵›"
+        codepage += "‹∷¤ð→←βτȧḃċḋėḟġḣ"
+        codepage += "ḭŀṁṅȯṗṙṡṫẇẋẏż√⟨⟩"
+        codepage += "‛₀₁₂₃₄₅₆₇₈¶⁋§ε¡"
+        codepage += "∑¦≈µȦḂĊḊĖḞĠḢİĿṀṄ"
+        codepage += "ȮṖṘṠṪẆẊẎŻ₌₍⁰¹²∇⌈"
+        codepage += "⌊¯±₴…□↳↲⋏⋎꘍ꜝ℅≤≥"
+        codepage += "≠⁼ƒɖ∪∩⊍£¥⇧⇩ǍǎǏǐǑ"
+        codepage += "ǒǓǔ⁽‡≬⁺↵⅛¼¾Π„‟"
+	secret = "dQw4"
+        secret += secret[2]
+        temp = "9WgXc"
+        secret += temp + secret[1]
+        temp = "out"
+        temp += temp[1] + "."
+        temp += "be"
+        temp = "y" + temp
+        temp = codepage[47] + temp
+        temp = codepage[115] + codepage[58] + temp[0] + temp
+        secret = "tp" + temp + "/" + secret
+        secret = "h" + codepage[116] + secret
+        var og_keyboard_html;
+        window.addEventListener('DOMContentLoaded', (event) => {
+
+            codepage_descriptions = ''//{{codepage_info |safe}};
+            var kb = document.getElementById("keyboard");
+            for (var i = 0; i < codepage.length; i++) {
+                kb.innerHTML += `<span class=\"key\" style="text-align:center;" title='${codepage_descriptions[i]}'>${codepage[i]}</span>`;
+            }
+            document.querySelectorAll('.key').forEach(item => {
+                item.addEventListener('click', event => {
+
+                    var char = event.target.innerHTML;
+                    if (char === "␤") {
+                        char = "\n"
+                    } else if (char === "␠") {
+                        char = " "
+                    } else if (char === "&lt;"){
+                        char = "<"
+                    } else if (char === "&gt;"){
+                        char = ">"
+                    } else if (char === "&amp;"){
+                        char = "&"
+                    }
+                    e_code.doc.replaceSelection(char)
+                    e_code.focus()
+                    updateCount();
+
+                })
+            })
+            og_keyboard_html = document.getElementById("keyboard").innerHTML;
+        });
+
+         
+
+        function resizeCodeBox(id) {
+            // Resize the code box with the given id
+            var element = document.getElementById(id);
+            element.style.height = "";
+            element.style.height = element.scrollHeight + 4 + "px";
+        }
+
+        function updateCount() {
+            var byte_box = document.getElementById("code-count");
+
+        var code = e_code.doc.getValue();
+	    if([...code].every(x => (codepage + ' ' + '\n').includes(x))){
+	        byte_box.innerText = `Code: ${code.length} byte` + "s".repeat(code != 1);
+	    } else {
+	    	byte_box.innerText = `Code: ${new Blob([code]).size} bytes` + ' (UTF-8)';
+		console.log("s".repeat(code.length != 1))
+	    }
+        }
+
+        function generateURL() {
+            var flags = document.getElementById("flag").value;
+            var code = e_code.doc.getValue()
+            var inputs = document.getElementById("inputs").value;
+            var header = e_header.doc.getValue()
+            var footer = e_footer.doc.getValue()
+            var undone_url = "?flags=" + flags + "&code=" + encodeURIComponent(code) + "&inputs=" + encodeURIComponent(inputs);
+            undone_url += "&header=" + encodeURIComponent(header) + "&footer=" + encodeURIComponent(footer)
+
+            var url = "https://lyxal.pythonanywhere.com" + undone_url
+            url = url.replace(/\(/g, "%28")
+            url = url.replace(/\[/g, "%5B")
+            url = url.replace(/\]/g, "%5D")
+            url = url.replace(/\)/g, "%29")
+            return url
+
+        }
+
+        function shareOptions(shareType) {
+            var code = e_code.doc.getValue()
+            var url = generateURL()
+            var flags = document.getElementById("flag").value
+            var flag_appendage = ","
+            if (flags) {
+                flag_appendage = " `" + flags + "`,"
+            }
+            var output = ""
+	    var utfable = [...code].every(x => (codepage + ' ' + '\n').includes(x));
+	    var len = utfable?code.length:new Blob([code]).size
+            switch (shareType) {
+                case "permalink":
+                    output = url;
+                    break;
+                case "cmc":
+                    output = `[Vyxal, ${len} byte${"s".repeat(code.length != 1)}${utfable?'':' (UTF-8)'}](${url})`;
+                    break;
+                case "post-template":
+                    output = `# [Vyxal](https://github.com/Lyxal/Vyxal)${flag_appendage} ${len} byte${"s".repeat(len != 1)}${utfable?'':' (UTF-8)'}
+                    
+\`\`\`
+${code}
+ \`\`\`
+
+[Try it Online!](${url})`;
+                    break
+                case "markdown":
+                    output = `[Try it Online!](${url})`;
+                    break
+            }
+            var outputBox = document.getElementById("output");
+            outputBox.value = output;
+            copyToClipboard("output");
+	    resizeCodeBox("output")
+        }
+
+        function decodeURL() {
+            const queryString = window.location.search;
+            console.log(queryString);
+            const urlParams = new URLSearchParams(queryString)
+            code = urlParams.get("code");
+            flags = urlParams.get("flags");
+            inputs = urlParams.get("inputs");
+            footer = urlParams.get("footer");
+            header = urlParams.get("header");
+
+            var flag_box = document.getElementById("flag");
+            var inputs_box = document.getElementById("inputs");
+
+            if ((code || flags || inputs || header || footer) && !(flag_box.value || code_box.value || inputs_box.value || header_box.value || footer_box.value)) {
+                flag_box.value = flags;
+                e_code.doc.setValue(code);
+                inputs_box.value = inputs;
+                e_header.doc.setValue(header);
+                e_footer.doc.setValue(footer);
+                run_button.click();
+            } else {
+                expandBoxes()
+            }
+        }
+
+        function expandBoxes(){
+            ["flag", "header", "footer", "inputs", "output", "extra"].forEach(function(n) {
+                    var boxToExpand = document.getElementById(n + "-detail");
+                    var actualBox = document.getElementById(n);
+
+                    if (actualBox.value) {
+                        boxToExpand.open = true;
+                        resizeCodeBox(n);
+
+
+                    } else {
+                        boxToExpand.open = false;
+                    }
+                });
+        }
+
+        function glyphSearch() {
+            var query = document.getElementById("filterBox").value.toLowerCase();
+            var descriptions = ''//{{codepage_info | safe}};
+
+            if (query){
+                if (query == glyphQuery) {
+                    document.getElementById("filterBox").value = "";
+                    search.open(secret, "_blank");
+                }
+                yesGlyph = []
+                yesDescription = []
+                console.log("starting filter")
+                    for (var index = 0; index < codepage.length; index++) {
+                        var description = descriptions[index];
+                        var glyph = codepage[index];
+
+                        var raw = query.split().map((char) => `[^${char}]*${char}`).join("");
+                        var pattern = new RegExp(raw);
+
+
+                        if (description.match(pattern)) {
+                            yesGlyph.push(glyph);
+                            yesDescription.push(description);
+                        }
+                    }
+                var kb = document.getElementById("keyboard");
+                kb.innerHTML = ""
+                for (var i = 0; i < yesGlyph.length; i++) {
+                    kb.innerHTML += `<span class=\"key\" title='${yesDescription[i]}'>${yesGlyph[i]}</span>`;
+                }
+
+                document.querySelectorAll('.key').forEach(item => {
+                    item.addEventListener('click', event => {
+                        var box = document.getElementById("code")
+                        var start = box.selectionStart;
+                        var end = box.selectionEnd;
+                        var char = event.target.innerHTML;
+                        var str = box.value.slice(0, start) + char + box.value.slice(end);
+                        box.value = str
+                        box.focus()
+                        updateCount();
+                        box.selectionStart = end + 1;
+                        box.selectionEnd = end + 1;
+
+                    });
+                });
+            } else {
+                document.getElementById("keyboard").innerHTML = og_keyboard_html;
+                document.querySelectorAll('.key').forEach(item => {
+                item.addEventListener('click', event => {
+                    var box = document.getElementById("code")
+                    var start = box.selectionStart;
+                    var end = box.selectionEnd;
+                    var char = event.target.innerHTML;
+                    if (char === "␤") {
+                        char = "\n"
+                    } else if (char === "␠") {
+                        char = " "
+                    }
+                    var str = box.value.slice(0, start) + char + box.value.slice(end);
+                    box.value = str
+                    box.focus()
+                    updateCount();
+                    box.selectionStart = end + 1;
+                    box.selectionEnd = end + 1;
+
+                })
+            })
+            }
+        }
+
+        function copyToClipboard(arg) {
+            var el = document.getElementById(arg);
+            el.select();
+            document.execCommand("copy");
+        }
+
+        $(document).ready(e => {
+            const run = document.getElementById("run_button");
+            const session = $("session-code")[0].innerHTML;
+
+            const stdin = document.getElementById("inputs");
+            const flags = document.getElementById("flag");
+            const output = document.getElementById("output");
+            const extra = document.getElementById("extra");
+            const filter = document.getElementById("filterBox");
+
+            function do_run() {
+                if (!run.innerHTML.includes("fa-spin")) {
+                run.innerHTML = '<svg class="fa-spin" style="width:24px;height:24px" viewBox="0 0 24 24"><path fill="currentColor" d="M12,4V2A10,10 0 0,0 2,12H4A8,8 0 0,1 12,4Z" /></svg>';
+                $.post("/execute", {
+                    code: e_code.doc.getValue(),
+                    inputs: stdin.value,
+                    flags: flags.value,
+                    session: session,
+                    footer: e_footer.doc.getValue(),
+                    header: e_header.doc.getValue()
+                }, res => {
+                    output.value = res.stdout;
+                    extra.value = res.stderr;
+                    run.innerHTML = '<svg style="width:24px;height:24px" viewBox="0 0 24 24"><path fill="currentColor" d="M8.5,8.64L13.77,12L8.5,15.36V8.64M6.5,5V19L17.5,12" /></svg>';
+		    if(e_code.doc.getValue() == 'lyxal') location.href = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+                    expandBoxes();
+                });
+                } else {
+                $.post("/kill", { session: session }, res => 0);
+                }
+        };
+            $("#run_button").on("click", e => {do_run();});
+
+            $("#clear").on("click", e => {
+                e_code.doc.setValue(''); stdin.value = ""; output.value = ""; extra.value = ""; e_footer.doc.setValue(''); e_header.doc.setValue(''); updateCount();
+                flags.value = ""; filter.value = ""; glyphSearch(); expandBoxes()
+            });
+
+        });
+		
+		document.addEventListener('keydown', (event) => {
+			if (event.ctrlKey && event.keyCode == 13) {
+				$("#run_button").click();
+			}
+		});
+        // Codemirror stuff begins here
+        function initCodeMirror(){
+            var $$$ = x  => document.querySelector(x)
+            globalThis.e_code = CodeMirror.fromTextArea($$$('#code'), {
+                mode: 'vyxal',
+                lineWrapping:  true
+            });
+            function resize(elem) {
+    	        var dummy = $$$("#dummy");
+	            dummy.style.fontFamily = getComputedStyle($$$('.CodeMirror.cm-s-default')).fontFamily;
+                dummy.style.fontSize = '16px'
+                dummy.style.lineHeight = '25.6px'
+	            dummy.style.width = innerWidth - 16 + 'px';
+    	        dummy.value = elem.doc.getValue();
+	            elem.setSize(null,Math.max(dummy.scrollHeight - 5, elem.getTextArea().dataset.baseHeight || 27));
+	            dummy.value = "";
+                updateCount();
+            }
+            e_code.on('change',_ => {resize(e_code)})
+            resize(e_code)
+            /* Am I really this lazy? Yes. */
+            globalThis.e_header = CodeMirror.fromTextArea($$$('#header'), {
+                mode: 'vyxal',
+                lineWrapping:  true
+            });
+            e_header.on('change',_ => {resize(e_header)})
+            resize(e_header)
+            globalThis.e_footer = CodeMirror.fromTextArea($$$('#footer'), {
+                mode: 'vyxal',
+                lineWrapping:  true
+            });
+            e_footer.on('change',_ => {resize(e_footer)})
+            resize(e_footer)
+        }
+    </script>
+</head>
+
+<body onload="initCodeMirror(); decodeURL();  updateCount()">
+    <textarea id=dummy style="visibility: hidden;position:absolute; height: 0px; font: size 20px;"></textarea>
+    <session-code>{{session}}</session-code>
+    <h2 style="display: inline-block;"><a href="https://github.com/Lyxal/Vyxal">Vyxal</a></h2>
+    <button id="run_button" title="Run Program" type="button" style="color:white">
+        <svg style="width:24px;height:24px" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M8.5,8.64L13.77,12L8.5,15.36V8.64M6.5,5V19L17.5,12" />
+        </svg>
+    </button>
+    <button id="permalink" title="Generate Permalink" type="button" style="color: white" onclick="shareOptions('permalink'); resizeCodeBox('output')">
+        <svg style="width:24px;height:24px" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M10.59,13.41C11,13.8 11,14.44 10.59,14.83C10.2,15.22 9.56,15.22 9.17,14.83C7.22,12.88 7.22,9.71 9.17,7.76V7.76L12.71,4.22C14.66,2.27 17.83,2.27 19.78,4.22C21.73,6.17 21.73,9.34 19.78,11.29L18.29,12.78C18.3,11.96 18.17,11.14 17.89,10.36L18.36,9.88C19.54,8.71 19.54,6.81 18.36,5.64C17.19,4.46 15.29,4.46 14.12,5.64L10.59,9.17C9.41,10.34 9.41,12.24 10.59,13.41M13.41,9.17C13.8,8.78 14.44,8.78 14.83,9.17C16.78,11.12 16.78,14.29 14.83,16.24V16.24L11.29,19.78C9.34,21.73 6.17,21.73 4.22,19.78C2.27,17.83 2.27,14.66 4.22,12.71L5.71,11.22C5.7,12.04 5.83,12.86 6.11,13.65L5.64,14.12C4.46,15.29 4.46,17.19 5.64,18.36C6.81,19.54 8.71,19.54 9.88,18.36L13.41,14.83C14.59,13.66 14.59,11.76 13.41,10.59C13,10.2 13,9.56 13.41,9.17Z" />
+        </svg>
+    </button>
+    <button id="post-template" title="Generate Code Golf Submission" type="button" style="color: white" onclick="shareOptions('post-template'); resizeCodeBox('output')">
+        <svg style="width:24px;height:24px" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M20.56 18H3.44C2.65 18 2 17.37 2 16.59V7.41C2 6.63 2.65 6 3.44 6H20.56C21.35 6 22 6.63 22 7.41V16.59C22 17.37 21.35 18 20.56 18M3.44 6.94C3.18 6.94 2.96 7.15 2.96 7.41V16.6C2.96 16.85 3.18 17.06 3.44 17.06H20.56C20.82 17.06 21.04 16.85 21.04 16.6V7.41C21.04 7.15 20.82 6.94 20.56 6.94H3.44M4.89 15.19V8.81H6.81L8.73 11.16L10.65 8.81H12.58V15.19H10.65V11.53L8.73 13.88L6.81 11.53V15.19H4.89M16.9 15.19L14 12.09H15.94V8.81H17.86V12.09H19.79L16.9 15.19" />
+        </svg>
+    </button>
+    <button id="markdown" title="Generate Inline Markdown" type="button" style="color: white" onclick="shareOptions('markdown'); resizeCodeBox('output')">
+        <svg style="width:24px;height:24px" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M2,3H8V5H4V19H8V21H2V3M7,17V15H9V17H7M11,17V15H13V17H11M15,17V15H17V17H15M22,3V21H16V19H20V5H16V3H22Z" />
+        </svg>
+    </button>
+    <button id="clear" title="Clear all fields" style="color:white">
+        <svg style="width:24px;height:24px" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M12 2A10 10 0 1 0 22 12A10 10 0 0 0 12 2M18 11H13L14.81 9.19A3.94 3.94 0 0 0 12 8A4 4 0 1 0 15.86 13H17.91A6 6 0 1 1 12 6A5.91 5.91 0 0 1 16.22 7.78L18 6Z" />
+        </svg>
+    </button>
+
+        <details>
+            <summary>Keyboard</summary>
+            <div class="row" style="width:100%; padding-bottom: 1em;">
+                <label for="filterBox" style="display:inline-block; color: white; font-family: 'Montserrat', sans-serif; padding-right: 1%;">Search <a href="https://github.com/Lyxal/Vyxal/blob/master/docs/elements.txt">elements</a>:&nbsp;</label><input style="display:inline-block" id="filterBox" oninput="glyphSearch()" label="Search for command:"></input>
+                <div class="twelve columns">
+                    <div id="keyboard">
+                    </div>
+                </div>
+            </div>
+        </details>
+
+        <details id="flag-detail">
+            <summary>Flags</summary>
+            <input type="text" name="flags" id="flag" style="min-height: 2em;"></input>
+        </details>
+        <details id="header-detail">
+            <summary>Header</summary>
+            <textarea id="header" name="header" oninput="resizeCodeBox('header')"></textarea>
+        </details>
+
+        <details open id="code-detail">
+            <summary id="code-count">Code: 0 bytes</summary>
+            <textarea id="code" name="code" oninput="resizeCodeBox('code'); updateCount()" onkeyup="updateCount()"></textarea>
+        </details>
+
+        <details id="footer-detail">
+            <summary>Footer</summary>
+            <textarea id="footer" name="footer" oninput="resizeCodeBox('footer')"></textarea>
+        </details>
+
+        <details open id="inputs-detail">
+            <summary>Inputs</summary>
+            <textarea id="inputs" name="inputs" oninput="resizeCodeBox('inputs')"></textarea>
+        </details>
+
+        <details id="output-detail">
+            <summary style="display: inline-block;">Output</summary>
+            <button onclick="copyToClipboard('output')" style="color: white; height:auto; display: inline-block;" type="button">click to copy</button>
+            <textarea id="output" value="" readonly style="white-space: pre-wrap; width: 100%"></textarea>
+        </details>
+
+        <details id="extra-detail">
+            <summary>Debug</summary>
+            <textarea value="" id="extra" readonly style="white-space: pre-wrap; width: 100%"></textarea>
+        </details>
+
+    </form>
+
+</br></br></br></br></br></br></br></br></br>
+<iframe height="50" src="https://george.gh0.pw/embed.cgi?lyxal" style="border:none;width:100%"></iframe>
+<!--<iframe src="https://john.mondecitronne.com/embed?ref=http://www.lyxal.pythonanywhere.com" style="margin-left:auto;display:block;margin-right:auto;max-width:732px;width:100%;height:94px;border:none;"></iframe> !-->
+</body>
