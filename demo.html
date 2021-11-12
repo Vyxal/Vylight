@@ -108,7 +108,8 @@ session-code {
     <script src='https://cdn.jsdelivr.net/npm/codemirror@5.62.0/lib/codemirror.js'></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/codemirror@5.62.0/lib/codemirror.css">
     <style>
-        .cm-mod{color:#569cd6}.cm-comp{color:#4ec9b0}.cm-function{color:#dbdb78}.cm-list{color:rgb(136, 75, 160)}.cm-string{color:#ce9178 !important}.cm-comment{color:#6a9955 !important}.cm-keyword{color:#c586c0 !important}.cm-var{color:#9cdcfe}.cm-number{color:#b5cea8 !important}.cm-constant{color:#4fc1ff}.CodeMirror-cursor{border-color:#d4d4d4 !important}.CodeMirror{color:#d4d4d4 !important;background-color:#1e1e1e !important}.cm-digraph{color:#d7ba7d}.CodeMirror-selected{background-color:#555 !important}
+        .cm-mod{color:#569cd6}.cm-comp{color:#4ec9b0}.cm-function{color:#dbdb78}.cm-list{color:rgb(136, 75, 160)}.cm-string{color:#ce9178 !important}.cm-comment{color:#6a9955 !important}.cm-keyword{color:#c586c0 !important}.cm-var{color:#9cdcfe}.cm-number{color:#b5cea8 !important}.cm-constant{color:#4fc1ff}.CodeMirror-cursor{border-color:#d4d4d4 !important}.CodeMirror{color:#d4d4d4 !important;background-color:#1e1e1e !important}.cm-digraph{color:#d7ba7d}.CodeMirror-selected{background-color:#555 !important} 
+        .CodeMirror{font-size:14px !important}
     </style>
     <!-- Parser -->
     <script>
@@ -427,8 +428,9 @@ ${code}
             function resize(elem) {
     	        var dummy = $$$("#dummy");
 	            dummy.style.fontFamily = getComputedStyle($$$('.CodeMirror.cm-s-default')).fontFamily;
-                dummy.style.fontSize = '16px'
-                dummy.style.lineHeight = '25.6px'
+
+                dummy.style.fontSize = '14px'
+dummy.style.lineHeight = '22.4px' 
 	            dummy.style.width = innerWidth - 16 + 'px';
     	        dummy.value = elem.doc.getValue();
 	            elem.setSize(null,Math.max(dummy.scrollHeight - 5, elem.getTextArea().dataset.baseHeight || 27));
