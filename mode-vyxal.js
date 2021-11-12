@@ -11,7 +11,7 @@
     const NUMBER_CHARS = '0123456789.';
     const MOD_CHARS = 'vß⁺₌₍~&ƒɖ';
     const DIGRAPHS = '¨ø∆Þ';
-    const CONSTANTS = '₀₁₄₆₇₈¶∞¤ð×u';
+    const CONSTANTS = '₀₁₄₆₇₈¶¤ð×u';
     const FUNC_CHARS = 'ƛ\'λµ⁽‡≬;';
     const OPENING = '{[(⟨';
     const CLOSING = '}])⟩';
