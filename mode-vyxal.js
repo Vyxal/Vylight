@@ -24,9 +24,9 @@
             token: function (stream, state) {
                 let char;
                 if (stream.sol()) {
-                    if(state.structure == 'COMMENT') state.structure = 'NONE'
+                    if(state.structure == 'COMMENT') {state.structure = 'NONE'}
                     char = '\n'
-                } else char = stream.next().toString();
+                } else {char = stream.next().toString();}
                 if (state.structure == 'VAR' && !VAR_CHARS.includes(char)) {
                     state.structure = 'NONE'
                 }
