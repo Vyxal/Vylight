@@ -22,11 +22,11 @@
                 return {structure: 'NONE', scc: 0, struct_nest: [], escaped: false}
             },
             token: function (stream, state) {
+                let char;
                 if (stream.sol()) {
-                    if(['COMMENT','CHAR','DIGRAPH'].includes(state.structure)) state.structure = 'NONE'
-                    if(!(state.structure == 'SCC' && state.scc--)) state.structure = 'NONE'
-                }
-                var char = stream.next().toString();
+                    if(state.structure == 'COMMENT') state.structure = 'NONE'
+                    char = '\n'
+                } else char = stream.next().toString();
                 if (state.structure == 'VAR' && !VAR_CHARS.includes(char)) {
                     state.structure = 'NONE'
                 }
