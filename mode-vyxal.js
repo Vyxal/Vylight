@@ -22,13 +22,11 @@
                 return {structure: 'NONE', scc: 0, struct_nest: [], escaped: false}
             },
             token: function (stream, state) {
-                var char;
+                var char = stream.next().toString();
                 if (stream.sol()) {
-                    if(state.structure == 'COMMENT') {state.structure = 'NONE'}
+                    if(state.structure == 'COMMENT') state.structure = 'NONE'
                     char = '\n'
                 }
-                char = stream.next().toString();
-                    
                 if (state.structure == 'VAR' && !VAR_CHARS.includes(char)) {
                     state.structure = 'NONE'
                 }
