@@ -8,7 +8,7 @@
     }
 })(function (CodeMirror) {
     "use strict";
-    const NUMBER_CHARS = '0123456789.';
+    const NUMBER_CHARS = '0123456789.°';
     const MOD_CHARS = 'vß⁺₌₍~&ƒɖ';
     const DIGRAPHS = '¨ø∆Þ';
     const CONSTANTS = '₀₁₄₆₇₈¶¤ð×u';
@@ -22,11 +22,16 @@
                 return {structure: 'NONE', scc: 0, struct_nest: [], escaped: false}
             },
             token: function (stream, state) {
-                var char = stream.next().toString();
                 if (stream.sol()) {
                     if(state.structure == 'COMMENT') state.structure = 'NONE'
-                    char = '\n'
+                    if(['DIGRAPH', 'CONSTANT','CHAR'].includes(state.structure)) state.structure = 'NONE'
+                    if(state.structure == 'NUMBER') state.structure = 'NONE'
+                    if(state.structure == 'SCC' && state.scc){
+                        state.scc--;
+                        if(!state.scc) state.structure = 'NONE';
+                    }
                 }
+                var char = stream.next().toString();
                 if (state.structure == 'VAR' && !VAR_CHARS.includes(char)) {
                     state.structure = 'NONE'
                 }
@@ -34,7 +39,7 @@
                     return 'var'
                 }
                 if (state.structure == 'COMMENT') {
-                    return 'comment'
+                    return 'comment'                    
                 }
                 if (state.structure == 'SCC' && state.scc) {
                     state.scc--;
@@ -175,10 +180,6 @@
                     }
                     state.structure = 'NONE';
                     return 'keyword'
-                }
-                if (char == '°' && state.structure == 'NONE') {
-                    state.structure = 'FUNC_REF';
-                    return 'function'
                 }
                 if (CLOSING.includes(char)) {
                     state.struct_nest.pop();
