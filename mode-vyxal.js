@@ -62,15 +62,10 @@
                     }
                     return 'function'
                 }
-                if (state.structure == 'FUNC_REF') {
-                    if (char == ';') {
-                        state.structure = 'NONE'
-                    }
-                    return 'function'
-                }
+
                 if (state.structure == 'FUNC_CALL') {
                     if (char == ';') {
-                        structure = 'NONE'
+                        state.structure = 'NONE'
                     }
                     return 'function'
                 }
@@ -167,7 +162,7 @@
                     return 'var'
                 }
                 if (char == '@' && state.structure == 'NONE') {
-                    if (stream.match(/^[a-zA-Z_]+(\:([a-zA-Z_]|\d)+)*|/)) {
+                    if (stream.match(/^[a-zA-Z_]+(\:([a-zA-Z_]|\d)+)*\|/)) {
                         state.structure = 'FUNC_DEF'
                     } else {
                         state.structure = 'FUNC_CALL'
