@@ -19,11 +19,12 @@
     CodeMirror.defineMode("vyxal", function () {
         return {
             startState: function () {
-                return {structure: 'NONE', scc: 0, struct_nest: [], escaped: false}
+                return {structure: 'NONE', scc: 0, struct_nest: [], escaped: false, depth: 0};
             },
             token: function (stream, state) {
+                console.log(state);
                 if (stream.sol()) {
-                    if(state.structure == 'COMMENT') state.structure = 'NONE'
+                    if(state.structure == 'COMMENT' || state.structure == 'COMMENTSTART') state.structure = 'NONE'
                     if(['DIGRAPH', 'CONSTANT','CHAR'].includes(state.structure)) state.structure = 'NONE'
                     if(state.structure == 'NUMBER') state.structure = 'NONE'
                     if(state.structure == 'SCC' && state.scc){
@@ -32,22 +33,50 @@
                     }
                 }
                 var char = stream.next().toString();
+                if (state.structure == 'COMMENTBLOCKEND') {
+                    if (char == '#') {
+                        state.depth--;
+                        if (state.depth == 0) {
+                            state.structure = 'NONE';
+                            return 'comment';
+                        } else {
+                            state.structure = 'COMMENTBLOCK';
+                            return 'comment';
+                        }
+                    } else {
+                        state.structure = 'COMMENTBLOCK';
+                        return 'comment';
+                    }
+                }
+                if (state.structure == 'COMMENTSTART' || state.structure == 'COMMENTBLOCKSTART') {
+                    if (char == '{') {
+                        state.structure = 'COMMENTBLOCK';
+                        state.depth++;
+                    } else {
+                        state.structure = state.structure == 'COMMENTBLOCKSTART' ? 'COMMENTBLOCK' : 'COMMENT';
+                    }
+                    return 'comment';
+                }
+                if (state.structure.startsWith('COMMENTBLOCK') && char == '}') {
+                    state.structure = 'COMMENTBLOCKEND';
+                    return 'comment';
+                }
                 if (state.structure == 'VAR' && !VAR_CHARS.includes(char)) {
                     state.structure = 'NONE'
                 }
                 if (state.structure == 'VAR' && VAR_CHARS.includes(char)) {
                     return 'var'
                 }
-                if (state.structure == 'COMMENT') {
-                    return 'comment'                    
-                }
                 if (state.structure == 'SCC' && state.scc) {
                     state.scc--;
                     if(!state.scc) state.structure = 'NONE';
                     return 'string';
                 }
-                if (char == '#' && state.structure == 'NONE') {
-                    state.structure = 'COMMENT';
+                if (char == '#' && (state.structure == 'NONE' || state.structure == 'COMMENTBLOCK')) {
+                    state.structure = state.structure == 'NONE' ? 'COMMENTSTART' : 'COMMENTBLOCKSTART';
+                    return 'comment'
+                }
+                if (state.structure.startsWith('COMMENT')) {
                     return 'comment'
                 }
                 if (state.structure == 'LAMBDA_ARITY') {
@@ -62,15 +91,10 @@
                     }
                     return 'function'
                 }
-                if (state.structure == 'FUNC_REF') {
-                    if (char == ';') {
-                        state.structure = 'NONE'
-                    }
-                    return 'function'
-                }
+
                 if (state.structure == 'FUNC_CALL') {
                     if (char == ';') {
-                        structure = 'NONE'
+                        state.structure = 'NONE'
                     }
                     return 'function'
                 }
@@ -167,7 +191,7 @@
                     return 'var'
                 }
                 if (char == '@' && state.structure == 'NONE') {
-                    if (stream.match(/^[a-zA-Z_]+(\:([a-zA-Z_]|\d)+)*|/)) {
+                    if (stream.match(/^[a-zA-Z_]+(\:([a-zA-Z_]|\d)+)*\|/)) {
                         state.structure = 'FUNC_DEF'
                     } else {
                         state.structure = 'FUNC_CALL'
