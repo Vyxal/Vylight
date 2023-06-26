@@ -19,17 +19,17 @@
     CodeMirror.defineMode("vyxal", function () {
         return {
             startState: function () {
-                return {structure: 'NONE', scc: 0, struct_nest: [], escaped: false, depth: 0};
+                return { structure: 'NONE', scc: 0, struct_nest: [], escaped: false, depth: 0 };
             },
             token: function (stream, state) {
                 console.log(state);
                 if (stream.sol()) {
-                    if(state.structure == 'COMMENT' || state.structure == 'COMMENTSTART') state.structure = 'NONE'
-                    if(['DIGRAPH', 'CONSTANT','CHAR'].includes(state.structure)) state.structure = 'NONE'
-                    if(state.structure == 'NUMBER') state.structure = 'NONE'
-                    if(state.structure == 'SCC' && state.scc){
+                    if (state.structure == 'COMMENT' || state.structure == 'COMMENTSTART') state.structure = 'NONE'
+                    if (['DIGRAPH', 'CONSTANT', 'CHAR'].includes(state.structure)) state.structure = 'NONE'
+                    if (state.structure == 'NUMBER') state.structure = 'NONE'
+                    if (state.structure == 'SCC' && state.scc) {
                         state.scc--;
-                        if(!state.scc) state.structure = 'NONE';
+                        if (!state.scc) state.structure = 'NONE';
                     }
                 }
                 var char = stream.next().toString();
@@ -69,7 +69,7 @@
                 }
                 if (state.structure == 'SCC' && state.scc) {
                     state.scc--;
-                    if(!state.scc) state.structure = 'NONE';
+                    if (!state.scc) state.structure = 'NONE';
                     return 'string';
                 }
                 if (char == '#' && (state.structure == 'NONE' || state.structure == 'COMMENTBLOCK')) {
@@ -98,13 +98,13 @@
                     }
                     return 'function'
                 }
-                if(state.escaped && char !== '`'){
+                if (state.escaped && char !== '`') {
                     state.escaped = false;
                     return 'string'
                 }
-                if(state.structure == 'STRING' && char == '\\'){
+                if (state.structure == 'STRING' && char == '\\') {
                     state.escaped = true;
-                } 
+                }
                 if (state.structure == 'STRING' && char !== '`') {
                     return 'string'
                 }
@@ -116,7 +116,7 @@
                     return 'comp'
                 }
                 if (char == '`' && (state.structure == 'NONE' || state.structure == 'STRING')) {
-                    if(state.escaped){
+                    if (state.escaped) {
                         state.escaped = false
                         return 'string'
                     }
@@ -140,7 +140,7 @@
                     state.scc = 2;
                     return 'string'
                 }
-                if (char == '«' && ['COMP_STRING','NONE'].includes(state.structure)) {
+                if (char == '«' && ['COMP_STRING', 'NONE'].includes(state.structure)) {
                     if (state.structure == 'COMP_STRING') {
                         state.structure = 'NONE'
                     } else {
@@ -148,7 +148,7 @@
                     }
                     return 'comp'
                 }
-                if (char == '»' && ['COMP_INT','NONE'].includes(state.structure)) {
+                if (char == '»' && ['COMP_INT', 'NONE'].includes(state.structure)) {
                     if (state.structure == 'COMP_INT') {
                         state.structure = 'NONE'
                     } else {
@@ -191,13 +191,14 @@
                     return 'var'
                 }
                 if (char == '¨' && state.structure == 'NONE') {
-                    if (stream.match(/@/)){
-                    if (stream.match(/^[a-zA-Z_]+(\:([a-zA-Z_]|\d)+)*\|/)) {
-                        state.structure = 'FUNC_DEF'
-                    } else {
-                        state.structure = 'FUNC_CALL'
+                    if (stream.match(/@/)) {
+                        if (stream.match(/^[a-zA-Z_]+(\:([a-zA-Z_]|\d)+)*/)) {
+                            state.structure = 'FUNC_DEF'
+                        } else {
+                            state.structure = 'FUNC_CALL'
+                        }
+                        return 'function'
                     }
-                    return 'function'}
                 }
                 if (char == '|' && (state.structure == 'NONE' || state.structure == 'VAR')) {
                     if ([...state.struct_nest].pop() == '⟨') {
