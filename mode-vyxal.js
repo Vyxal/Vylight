@@ -190,13 +190,14 @@
                     state.structure = 'VAR';
                     return 'var'
                 }
-                if (char == '@' && state.structure == 'NONE') {
+                if (char == '¨' && state.structure == 'NONE') {
+                    if (stream.match(/@/)){
                     if (stream.match(/^[a-zA-Z_]+(\:([a-zA-Z_]|\d)+)*\|/)) {
                         state.structure = 'FUNC_DEF'
                     } else {
                         state.structure = 'FUNC_CALL'
                     }
-                    return 'function'
+                    return 'function'}
                 }
                 if (char == '|' && (state.structure == 'NONE' || state.structure == 'VAR')) {
                     if ([...state.struct_nest].pop() == '⟨') {
